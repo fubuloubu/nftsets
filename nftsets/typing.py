@@ -1,5 +1,6 @@
 from datetime import datetime as Timestamp
-from typing import Dict, List, Literal, Optional, Union
+from enum import Enum
+from typing import Dict, List, Optional, Union
 
 from pydantic import AnyUrl
 from pydantic import BaseModel as _BaseModel
@@ -11,13 +12,6 @@ Name = str
 Symbol = str
 
 TokenId = int
-
-DisplayType = Union[
-    Literal["number"],
-    Literal["boost_number"],
-    Literal["boost_percentage"],
-    Literal["date"],
-]
 
 
 class BaseModel(_BaseModel):
@@ -31,6 +25,15 @@ class BaseModel(_BaseModel):
         froze = True
 
 
+class DisplayType(Enum):
+    # NOTE: If `None`, will display as a simple string
+    STRING = None
+    NUMBER = "number"
+    BOOST_NUMBER = "boost_number"
+    BOOST_PERCENTATGE = "boost_percentage"
+    DATE = "date"
+
+
 class Attribute(BaseModel):
     """
     Using OpenSea's Metadata Standards
@@ -40,8 +43,7 @@ class Attribute(BaseModel):
 
     # NOTE: If `None`, will display as a "Generic Attribute"
     trait_type: Optional[Name] = None
-    # NOTE: If `None`, will display as a simple string
-    display_type: Optional[DisplayType] = None
+    display_type: DisplayType = DisplayType.STRING
     value: Union[str, int, float]
     # NOTE: If `None`, will use the maximum value for this attribute over the collection
     max_value: Optional[Union[int, float]] = None
