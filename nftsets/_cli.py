@@ -79,7 +79,7 @@ def list_collections(search, set_name, chain_id):
         lambda t: pattern.match(t.symbol),
         manager.get_collections(set_name, chain_id),
     ):
-        click.echo("{address} ({symbol})".format(**collection_info.dict()))
+        click.echo("{address} ({name})".format(**collection_info.dict()))
 
 
 @cli.command(short_help="Display the info for a particular collection")
