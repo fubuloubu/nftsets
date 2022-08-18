@@ -32,16 +32,16 @@ NOTE: **Work in Progress!**
 
 ```py
 >>> from nftsets import Manager
->>> nfts = Manager()
+>>> nsm = Manager()
 
->>> nfts.available_sets()
+>>> nsm.available()
 []
 
->>> nfts.install_set("nfts.opensea.eth")
->>> nfts.available_sets()
+>>> nsm.install("nfts.opensea.eth")
+>>> nsm.available()
 ["opensea"]
 
->>> print(*(set.name for set in nfts))
+>>> print(*(set.name for set in nsm.get_collections()))
 PUNKS
 BAYC
 ...

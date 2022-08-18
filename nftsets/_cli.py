@@ -12,7 +12,7 @@ class NftSetChoice(click.Choice):
 
     @property
     def choices(self):
-        return list(Manager().available_nftsets())
+        return list(Manager().available())
 
 
 @click.group()
@@ -27,10 +27,10 @@ def cli():
 def _list():
     manager = Manager()
 
-    available = manager.available_nftsets()
+    available = manager.available()
     if available:
         click.echo("Installed Sets:")
-        for nftset in map(manager.get_nftset, available):
+        for nftset in map(manager.get, available):
             click.echo(f"- {nftset.name} ({nftset.timestamp})")
 
     else:
@@ -42,7 +42,7 @@ def _list():
 def install(uri):
     manager = Manager()
 
-    manager.install_nftset(uri)
+    manager.install(uri)
 
 
 @cli.command(short_help="Remove an existing Set")
@@ -50,7 +50,7 @@ def install(uri):
 def remove(name):
     manager = Manager()
 
-    manager.remove_nftset(name)
+    manager.remove(name)
 
 
 @cli.command(short_help="Choose default Set")
@@ -58,9 +58,9 @@ def remove(name):
 def set_default(name):
     manager = Manager()
 
-    manager.set_default_nftset(name)
+    manager.set_default(name)
 
-    click.echo(f"Default Set is now: '{manager.default_nftset}'")
+    click.echo(f"Default Set is now: '{manager.default}'")
 
 
 @cli.command(short_help="Display all installed Collections")
@@ -70,7 +70,7 @@ def set_default(name):
 def list_collections(search, set_name, chain_id):
     manager = Manager()
 
-    if not manager.default_nftset:
+    if not manager.default:
         raise click.ClickException("No Sets available!")
 
     pattern = re.compile(search or ".*")
@@ -90,7 +90,7 @@ def list_collections(search, set_name, chain_id):
 def collection_info(symbol, set_name, chain_id, case_insensitive):
     manager = Manager()
 
-    if not manager.default_nftset:
+    if not manager.default:
         raise click.ClickException("No Sets available!")
 
     collection_info = manager.get_collection_info(symbol, set_name, chain_id, case_insensitive)
