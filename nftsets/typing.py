@@ -52,22 +52,25 @@ class Attribute(BaseModel):
     @root_validator
     def value_matches_display_type(cls, values):
         if "display_type" in values:
-            if "percentage" in values["display_type"]:
+            if "percentage" in str(values["display_type"]):
                 assert isinstance(
                     values["value"], float
                 ), "Display type 'boost_percentage' must be float"
-            elif values["display_type"]:  # NOTE: Skip string display
+            elif values["display_type"] is not DisplayType.STRING:
                 assert isinstance(
                     values["value"], int
                 ), f"Display type '{values['display_type']}' must be an int"
+
         return values
 
     @root_validator
     def value_within_max_value(cls, values):
-        if "max_value" in values:
+        if "max_value" in values and values["max_value"] is not None:
             assert (
                 values["value"] <= values["max_value"]
             ), f'Value {values["value"]} must be less than or equal to {values["max_value"]}'
+
+        return values
 
 
 class Metadata(BaseModel):
