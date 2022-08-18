@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import AnyUrl
 from pydantic import BaseModel as _BaseModel
+from pydantic import root_validator
 
 ChainId = int
 Address = str
@@ -47,6 +48,26 @@ class Attribute(BaseModel):
     value: Union[str, int, float]
     # NOTE: If `None`, will use the maximum value for this attribute over the collection
     max_value: Optional[Union[int, float]] = None
+
+    @root_validator
+    def value_matches_display_type(cls, values):
+        if "display_type" in values:
+            if "percentage" in values["display_type"]:
+                assert isinstance(
+                    values["value"], float
+                ), "Display type 'boost_percentage' must be float"
+            elif values["display_type"]:  # NOTE: Skip string display
+                assert isinstance(
+                    values["value"], int
+                ), f"Display type '{values['display_type']}' must be an int"
+        return values
+
+    @root_validator
+    def value_within_max_value(cls, values):
+        if "max_value" in values:
+            assert (
+                values["value"] <= values["max_value"]
+            ), f'Value {values["value"]} must be less than or equal to {values["max_value"]}'
 
 
 class Metadata(BaseModel):
