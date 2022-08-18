@@ -54,7 +54,9 @@ setup(
     include_package_data=True,
     install_requires=[
         "importlib-metadata ; python_version<'3.8'",
+        "pydantic>=1.9.2,<2",
     ],
+    entry_points={"console_scripts": ["nftsets=nftsets._cli:cli"]},
     python_requires=">=3.7.2,<4",
     extras_require=extras_require,
     py_modules=["nftsets"],
