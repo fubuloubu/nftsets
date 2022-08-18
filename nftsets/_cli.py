@@ -100,8 +100,9 @@ def collection_info(symbol, set_name, chain_id, case_insensitive):
         """
         Name: {name}
       Symbol: {symbol}
-    Chain ID: {chainId}
+    Chain ID: {chain_id}
      Address: {address}
+    Metadata: {metadata}
     """.format(
             **collection_info
         )
