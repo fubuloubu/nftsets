@@ -133,6 +133,15 @@ class CollectionInfo(BaseModel):
 
         return data
 
+    def unpack_metadata_to_folder(self, folder: Path):
+        if not folder.is_dir():
+            folder.mkdir()
+
+        max_digits = len(str(self.total_supply - 1))
+        for token_id, metadata in self.metadata.items():
+            token_id_str = str(token_id).zfill(max_digits)
+            (folder / f"{token_id_str}.json").write_text(metadata.json())
+
 
 class NftSet(BaseModel):
     name: Name  # NOTE: Name of the provider of the Set
