@@ -1,7 +1,9 @@
 from datetime import datetime as Timestamp
 from enum import Enum
+from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+import requests  # type: ignore[import]
 from pydantic import AnyUrl
 from pydantic import BaseModel as _BaseModel
 from pydantic import root_validator
@@ -13,6 +15,8 @@ Name = str
 Symbol = str
 
 TokenId = int
+
+AttributeValue = Union[str, int, float]
 
 
 class BaseModel(_BaseModel):
@@ -27,8 +31,6 @@ class BaseModel(_BaseModel):
 
 
 class DisplayType(Enum):
-    # NOTE: If `None`, will display as a simple string
-    STRING = None
     NUMBER = "number"
     BOOST_NUMBER = "boost_number"
     BOOST_PERCENTATGE = "boost_percentage"
@@ -44,19 +46,21 @@ class Attribute(BaseModel):
 
     # NOTE: If `None`, will display as a "Generic Attribute"
     trait_type: Optional[Name] = None
-    display_type: DisplayType = DisplayType.STRING
-    value: Union[str, int, float]
+    # NOTE: If `None`, will display as a simple string
+    display_type: Optional[DisplayType] = None
+    value: AttributeValue
     # NOTE: If `None`, will use the maximum value for this attribute over the collection
     max_value: Optional[Union[int, float]] = None
 
     @root_validator
     def value_matches_display_type(cls, values):
-        if "display_type" in values:
+        if "display_type" in values and values["display_type"]:
             if "percentage" in str(values["display_type"]):
                 assert isinstance(
                     values["value"], float
                 ), "Display type 'boost_percentage' must be float"
-            elif values["display_type"] is not DisplayType.STRING:
+
+            else:
                 assert isinstance(
                     values["value"], int
                 ), f"Display type '{values['display_type']}' must be an int"
@@ -91,7 +95,7 @@ class CollectionInfo(BaseModel):
 
     # NOTE: If `None`, collection has not been fully minted, or is unlimited in size
     #       If unlimited in size, suggestion is that `metadata` is set to `None` also
-    total_supply: Optional[int] = None
+    total_supply: int
 
     # NOTE: Must be either a URI w/ `{uri}/{tokenId}` that points to `Metadata` objects
     #       or a pre-indexed mapping of `{tokenId: URI}` that points to `Metadata` objects
@@ -99,7 +103,35 @@ class CollectionInfo(BaseModel):
     #       or if `None`, may be able to be fetched via `ERC721(address).tokenURI(tokenId) -> URI`
     # NOTE: If pre-indexed mapping, it may not be complete and may require further indexing
     # NOTE: Any URIs must point to content which is publicly available
-    metadata: Optional[Union[AnyUrl, Dict[TokenId, Union[AnyUrl, Metadata]]]] = None
+    metadata: Dict[TokenId, Metadata] = {}
+
+    @root_validator(pre=True)
+    def expand_metadata(cls, data):
+        raw_metadata = data["metadata"]
+        if isinstance(raw_metadata, str) and "total_supply" in data and data["total_supply"]:
+            raw_metadata = {
+                token_id: f"{raw_metadata}/{token_id}" for token_id in range(data["total_supply"])
+            }
+
+        if isinstance(raw_metadata, dict):
+            metadata = {}
+            for token_id in raw_metadata:
+                if isinstance(raw_metadata[token_id], str):
+                    response = requests.get(raw_metadata[token_id])
+                    metadata[token_id] = Metadata.parse_obj(response.json())
+
+                else:
+                    metadata[token_id] = Metadata.parse_obj(raw_metadata[token_id])
+
+            data["metadata"] = metadata
+
+            if "total_supply" not in data:
+                data["total_supply"] = len(metadata)
+
+        else:
+            raise ValueError(f"Cannot expand metadata '{raw_metadata}'")
+
+        return data
 
 
 class NftSet(BaseModel):
